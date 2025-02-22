@@ -32,12 +32,19 @@ def main():
                         help='Tile size, [0,0,0] for no tile during testing (testing as a whole)')
     parser.add_argument('--tile_overlap', type=int, nargs='+', default=[2,20,20],
                         help='Overlapping of different tiles')
-    parser.add_argument('--num_workers', type=int, default=16, help='number of workers in data loading')
+    parser.add_argument('--num_workers', type=int, default=6, help='number of workers in data loading')
     parser.add_argument('--save_result', action='store_true', help='save resulting image')
     args = parser.parse_args()
 
     # define model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Running on device: {device}')
+    print(f'Testing task: {args.task}')
+    print(f'Input low-quality video folder: {args.folder_lq}')
+    print(f'Input ground-truth video folder: {args.folder_gt}')
+    print(f'Noise level: {args.sigma}')
+    print(f'Tile size: {args.tile}')
+    print(f'Tile overlap: {args.tile_overlap}')
     model = prepare_model_dataset(args)
     model.eval()
     model = model.to(device)
@@ -57,6 +64,9 @@ def main():
     save_dir = f'results/{args.task}'
     if args.save_result:
         os.makedirs(save_dir, exist_ok=True)
+        print(f'Results will be saved at {save_dir}')
+    else:
+        print("results will not be saved")
     test_results = OrderedDict()
     test_results['psnr'] = []
     test_results['ssim'] = []
@@ -94,6 +104,7 @@ def main():
                 seq_ = osp.basename(batch['lq_path'][i][0]).split('.')[0]
                 os.makedirs(f'{save_dir}/{folder[0]}', exist_ok=True)
                 cv2.imwrite(f'{save_dir}/{folder[0]}/{seq_}.png', img)
+                print(f'Save to {save_dir}/{folder[0]}/{seq_}.png')
 
             # evaluate psnr/ssim
             if gt is not None:
@@ -191,7 +202,9 @@ def prepare_model_dataset(args):
         args.scale = 1
         args.window_size = [2,8,8]
         args.nonblind_denoising = True
-
+    # args.scale = 1
+    # args.window_size = [2,8,8]
+    # args.nonblind_denoising = True
     # download model
     model_path = f'model_zoo/rvrt/{args.task}.pth'
     if os.path.exists(model_path):

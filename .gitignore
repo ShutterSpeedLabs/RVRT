@@ -1,0 +1,6 @@
+testsets/
+!testsets/**/
+!testsets/**/README.md
+*.pyc
+*.pth
+results/
